@@ -32,6 +32,10 @@ defmodule TodoList do
         %TodoList{todo_list | entries: new_entries}
     end
   end
+
+  def delete_entry(todo_list, entry_id) do
+    %TodoList{todo_list | entries: Map.delete(todo_list.entries, entry_id)}
+  end
 end
 
 ExUnit.start()
@@ -39,7 +43,7 @@ ExUnit.start()
 defmodule TodoListTest do
   use ExUnit.Case, async: true
 
-  test "TodoList" do
+  test "TodoList CRUD" do
     todo_list =
       TodoList.new()
       |> TodoList.add_entry(%{date: ~D[2018-12-19], title: "Dentist"})
@@ -55,5 +59,10 @@ defmodule TodoListTest do
              todo_list
              |> TodoList.update_entry(1, fn entry -> %{entry | date: ~D[2018-12-21]} end)
              |> TodoList.entries(~D[2018-12-21])
+
+    assert [] ==
+             todo_list
+             |> TodoList.delete_entry(2)
+             |> TodoList.entries(~D[2018-12-20])
   end
 end
