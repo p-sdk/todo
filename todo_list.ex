@@ -1,7 +1,15 @@
 defmodule TodoList do
   defstruct auto_id: 1, entries: %{}
 
-  def new, do: %TodoList{}
+  def new(entries \\ []) do
+    Enum.reduce(
+      entries,
+      %TodoList{},
+      fn entry, todo_list_acc ->
+        add_entry(todo_list_acc, entry)
+      end
+    )
+  end
 
   def add_entry(todo_list, entry) do
     entry = Map.put(entry, :id, todo_list.auto_id)
@@ -64,5 +72,18 @@ defmodule TodoListTest do
              todo_list
              |> TodoList.delete_entry(2)
              |> TodoList.entries(~D[2018-12-20])
+  end
+
+  test "builds TodoList iteratively" do
+    entries = [
+      %{date: ~D[2018-12-19], title: "Dentist"},
+      %{date: ~D[2018-12-20], title: "Shopping"},
+      %{date: ~D[2018-12-19], title: "Movies"}
+    ]
+
+    todo_list = TodoList.new(entries)
+
+    assert [%{date: ~D[2018-12-20], id: 2, title: "Shopping"}] ==
+             TodoList.entries(todo_list, ~D[2018-12-20])
   end
 end
