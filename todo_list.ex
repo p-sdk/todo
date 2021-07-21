@@ -46,6 +46,21 @@ defmodule TodoList do
   end
 end
 
+defimpl Collectable, for: TodoList do
+  def into(original) do
+    {original, &into_callback/2}
+  end
+
+  defp into_callback(todo_list, {:cont, entry}),
+    do: TodoList.add_entry(todo_list, entry)
+
+  defp into_callback(todo_list, :done),
+    do: todo_list
+
+  defp into_callback(_todo_list, :halt),
+    do: :ok
+end
+
 defmodule TodoList.CsvImporter do
   def import(filename) do
     filename
@@ -122,6 +137,19 @@ defmodule TodoListTest do
     ]
 
     todo_list = TodoList.new(entries)
+
+    assert [%{date: ~D[2018-12-20], id: 2, title: "Shopping"}] ==
+             TodoList.entries(todo_list, ~D[2018-12-20])
+  end
+
+  test "implements Collectable for TodoList" do
+    entries = [
+      %{date: ~D[2018-12-19], title: "Dentist"},
+      %{date: ~D[2018-12-20], title: "Shopping"},
+      %{date: ~D[2018-12-19], title: "Movies"}
+    ]
+
+    todo_list = for entry <- entries, into: TodoList.new(), do: entry
 
     assert [%{date: ~D[2018-12-20], id: 2, title: "Shopping"}] ==
              TodoList.entries(todo_list, ~D[2018-12-20])
