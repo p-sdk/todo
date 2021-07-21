@@ -46,6 +46,46 @@ defmodule TodoList do
   end
 end
 
+defmodule TodoList.CsvImporter do
+  def import(filename) do
+    filename
+    |> read_lines()
+    |> build_entries()
+    |> TodoList.new()
+  end
+
+  defp read_lines(filename) do
+    filename
+    |> File.stream!()
+    |> Stream.map(&String.replace(&1, "\n", ""))
+  end
+
+  defp build_entries(lines) do
+    lines
+    |> Stream.map(&parse_line/1)
+    |> Stream.map(&build_entry/1)
+  end
+
+  defp parse_line(line) do
+    [date_str, title] = String.split(line, ",")
+
+    {parse_date(date_str), title}
+  end
+
+  defp parse_date(date_str) do
+    [year, month, day] =
+      date_str
+      |> String.split("/")
+      |> Enum.map(&String.to_integer/1)
+
+    Date.new!(year, month, day)
+  end
+
+  defp build_entry({date, title}) do
+    %{date: date, title: title}
+  end
+end
+
 ExUnit.start()
 
 defmodule TodoListTest do
@@ -82,6 +122,13 @@ defmodule TodoListTest do
     ]
 
     todo_list = TodoList.new(entries)
+
+    assert [%{date: ~D[2018-12-20], id: 2, title: "Shopping"}] ==
+             TodoList.entries(todo_list, ~D[2018-12-20])
+  end
+
+  test "CSV importer" do
+    todo_list = TodoList.CsvImporter.import("todos.csv")
 
     assert [%{date: ~D[2018-12-20], id: 2, title: "Shopping"}] ==
              TodoList.entries(todo_list, ~D[2018-12-20])
