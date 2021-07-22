@@ -52,6 +52,8 @@ defmodule TodoServer do
   defp process_message(todo_list, {:delete_entry, entry_id}) do
     TodoList.delete_entry(todo_list, entry_id)
   end
+
+  defp process_message(todo_list, _), do: todo_list
 end
 
 defmodule TodoList do
