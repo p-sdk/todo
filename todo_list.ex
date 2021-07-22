@@ -17,6 +17,14 @@ defmodule TodoServer do
     end
   end
 
+  def update_entry(todo_server, entry_id, updater_fun) do
+    send(todo_server, {:update_entry, entry_id, updater_fun})
+  end
+
+  def delete_entry(todo_server, entry_id) do
+    send(todo_server, {:delete_entry, entry_id})
+  end
+
   defp loop(todo_list) do
     new_todo_list =
       receive do
@@ -33,6 +41,14 @@ defmodule TodoServer do
   defp process_message(todo_list, {:entries, caller, date}) do
     send(caller, {:todo_entries, TodoList.entries(todo_list, date)})
     todo_list
+  end
+
+  defp process_message(todo_list, {:update_entry, entry_id, updater_fun}) do
+    TodoList.update_entry(todo_list, entry_id, updater_fun)
+  end
+
+  defp process_message(todo_list, {:delete_entry, entry_id}) do
+    TodoList.delete_entry(todo_list, entry_id)
   end
 end
 
@@ -155,6 +171,14 @@ defmodule TodoServerTest do
              TodoServer.entries(todo_server, ~D[2018-12-19])
 
     assert [] == TodoServer.entries(todo_server, ~D[2018-12-18])
+
+    TodoServer.update_entry(todo_server, 1, fn entry -> %{entry | date: ~D[2018-12-21]} end)
+
+    assert [%{date: ~D[2018-12-21], title: "Dentist"}] =
+             TodoServer.entries(todo_server, ~D[2018-12-21])
+
+    TodoServer.delete_entry(todo_server, 2)
+    assert [] == TodoServer.entries(todo_server, ~D[2018-12-20])
   end
 end
 
