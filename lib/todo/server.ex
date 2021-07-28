@@ -1,0 +1,47 @@
+defmodule Todo.Server do
+  use GenServer
+
+  def start do
+    GenServer.start(Todo.Server, nil, name: :todo_server)
+  end
+
+  def add_entry(new_entry) do
+    GenServer.cast(:todo_server, {:add_entry, new_entry})
+  end
+
+  def entries(date) do
+    GenServer.call(:todo_server, {:entries, date})
+  end
+
+  def update_entry(entry_id, updater_fun) do
+    GenServer.cast(:todo_server, {:update_entry, entry_id, updater_fun})
+  end
+
+  def delete_entry(entry_id) do
+    GenServer.cast(:todo_server, {:delete_entry, entry_id})
+  end
+
+  def init(_) do
+    {:ok, Todo.List.new()}
+  end
+
+  def handle_call({:entries, date}, _, todo_list) do
+    {:reply, Todo.List.entries(todo_list, date), todo_list}
+  end
+
+  def handle_call(_, _, todo_list), do: {:reply, :error, todo_list}
+
+  def handle_cast({:add_entry, new_entry}, todo_list) do
+    {:noreply, Todo.List.add_entry(todo_list, new_entry)}
+  end
+
+  def handle_cast({:update_entry, entry_id, updater_fun}, todo_list) do
+    {:noreply, Todo.List.update_entry(todo_list, entry_id, updater_fun)}
+  end
+
+  def handle_cast({:delete_entry, entry_id}, todo_list) do
+    {:noreply, Todo.List.delete_entry(todo_list, entry_id)}
+  end
+
+  def handle_cast(_, todo_list), do: {:noreply, todo_list}
+end
